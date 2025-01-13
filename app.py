@@ -1,29 +1,24 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS, cross_origin
-from flask_sqlalchemy import SQLAlchemy
-import pyodbc
+from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS
 import jwt
 import datetime
+import json
+from azure.storage.blob import BlobServiceClient
 from werkzeug.security import generate_password_hash, check_password_hash
+
+connect_str = ""
+blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+container = "data"
 
 # App configuration
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = (
-    'mssql+pyodbc://<USERNAME>:<PASSWORD>@<SERVER>/<DATABASE>?driver=ODBC+Driver+18+for+SQL+Server'
-)
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+#do wywalenia do env
+app.secret_key = 'this_is_the_most_secret_key'
+
 
 cors = CORS(app)
 
-db = SQLAlchemy(app)
-
-# Database model
-class User(db.Model):
-    __tablename__ = 'users'
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    password = db.Column(db.String(120), nullable=False)
 
 # Utility function to create JWT token
 def create_token(user_id):
@@ -44,21 +39,32 @@ def decode_token(token):
         return None
 
 # Routes
+@app.route('/register', methods=['GET'])
+def registerview():
+    return render_template('register.html')
+
+
 @app.route('/register', methods=['POST'])
 def register():
     data = request.json
     username = data.get('username')
     password = data.get('password')
-
-    if User.query.filter_by(username=username).first():
+    
+    blob_client = blob_service_client.get_blob_client(container=container, blob=username)
+    if blob_client.exists():
         return jsonify({'message': 'Username already exists.'}), 400
 
-    hashed_password = generate_password_hash(password, method='sha256')
-    new_user = User(username=username, password=hashed_password)
-    db.session.add(new_user)
-    db.session.commit()
+    hashed_password = generate_password_hash(password)
+
+    data = {"username": username, "password": hashed_password}
+
+    blob_client.upload_blob(data=json.dumps(data))
 
     return jsonify({'message': 'Registration successful!'}), 201
+
+@app.route('/login', methods=['GET'])
+def loginview():
+    return render_template('login.html')
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -66,12 +72,21 @@ def login():
     username = data.get('username')
     password = data.get('password')
 
-    user = User.query.filter_by(username=username).first()
-    if not user or not check_password_hash(user.password, password):
+    blob_client = blob_service_client.get_blob_client(container=container, blob=username)
+
+    blob = blob_client.download_blob().readall()
+    try:
+        data = json.loads(blob)
+    except:
+        return jsonify({'message': 'Data was saved in a bad format.'}), 400
+
+    if not blob_client.exists() or not check_password_hash(data['password'], password):
         return jsonify({'message': 'Invalid username or password.'}), 401
 
-    token = create_token(user.id)
+    token = create_token(data['username'])
+    print(token)
     return jsonify({'token': token}), 200
+
 
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
@@ -93,6 +108,4 @@ def logout():
 
 # Main entry point
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()  # Ensure all database tables are created
     app.run(debug=True)

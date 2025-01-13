@@ -7,7 +7,7 @@
 </head>
 <body>
     <h1>Register</h1>
-    <form method="POST" action="/register">
+    <form id="registerForm">
         <label for="username">Username:</label><br>
         <input type="text" id="username" name="username" required><br><br>
         <label for="password">Password:</label><br>
@@ -15,5 +15,28 @@
         <button type="submit">Register</button>
     </form>
     <p>Already have an account? <a href="/login">Login here</a>.</p>
+    
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            const response = await fetch('/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password }),
+            });
+
+            if (response.ok) {
+                alert('Registration successful!');
+            } else {
+                alert('Registration failed: ' + (await response.text()));
+            }
+        });
+    </script>
 </body>
 </html>

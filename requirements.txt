@@ -1,4 +1,5 @@
 flask
-pyodbc
-flask_sqlalchemy
 flask_cors
+jwt
+azure-storage-blob 
+azure-identity

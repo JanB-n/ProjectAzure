@@ -54,7 +54,7 @@ jobs:
 
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
       - name: Test application
-        run: python test_app.py
+        run: python -m pytest test_app.py
       
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v3

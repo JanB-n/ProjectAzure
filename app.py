@@ -82,7 +82,7 @@ def login():
         return jsonify({'message': "Couldn't connect to blob service."}), 503
 
     if not blob_client.exists():
-        return return jsonify({'message': 'Invalid username or password.'}), 401
+        return jsonify({'message': 'Invalid username or password.'}), 401
     
     try:
         blob = blob_client.download_blob().readall()

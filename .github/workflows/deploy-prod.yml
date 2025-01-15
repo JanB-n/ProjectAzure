@@ -23,6 +23,8 @@ env:
   AZURE_WEBAPP_NAME: weatherprojectagh  # set this to the name of your Azure Web App
   PYTHON_VERSION: '3.11'              # set this to the Python version to use
   SECRET_KEY: ${{secrets.SECRET_KEY}}
+  FUNCTION_STR: ${{secrets.FUNCTION_STR}}
+  CONNECT_STR: ${{secrets.CONNECT_STR}}
 
 on:
   push:

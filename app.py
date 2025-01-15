@@ -6,6 +6,10 @@ import json
 import os
 from azure.storage.blob import BlobServiceClient
 from werkzeug.security import generate_password_hash, check_password_hash
+from azure.monitor.opentelemetry import configure_azure_monitor
+from opentelemetry import trace
+
+configure_azure_monitor(os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING"))
 
 connect_str = os.getenv("CONNECT_STR")
 function_str = os.getenv("FUNCTION_STR")

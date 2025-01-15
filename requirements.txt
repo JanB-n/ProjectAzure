@@ -1,6 +1,6 @@
 flask
 flask_cors
-jwt
+PyJWT
 azure-storage-blob 
 azure-identity
 pytest 

@@ -76,19 +76,26 @@ def login():
     data = request.json
     username = data.get('username')
     password = data.get('password')
+    try:
+        blob_client = blob_service_client.get_blob_client(container=container, blob=username)
+    except:
+        return jsonify({'message': "Couldn't connect to blob service."}), 503
 
-    blob_client = blob_service_client.get_blob_client(container=container, blob=username)
-
+    if not blob_client.exists():
+        return return jsonify({'message': 'Invalid username or password.'}), 401
+    
     try:
         blob = blob_client.download_blob().readall()
         user_data = json.loads(blob)
     except:
-        return jsonify({'message': 'Invalid username or password.'})
+        return jsonify({'message': "Couldn't get the blob."}), 503
 
-    if not blob_client.exists() or not check_password_hash(user_data['password'], password):
+    if not check_password_hash(user_data['password'], password):
         return jsonify({'message': 'Invalid username or password.'}), 401
-
-    token = create_token(username)
+    try:
+        token = create_token(username)
+    except Exception as e:
+        return jsonify({'message': str(e)}), 501
     response = make_response({'message': 'Login successful!'})
     response.set_cookie('Authorization', token, httponly=True, samesite='Lax')  # Save token in cookies
     return response, 200

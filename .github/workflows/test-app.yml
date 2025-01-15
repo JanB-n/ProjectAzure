@@ -1,4 +1,4 @@
-name: BETA Build and deploy Python app to Azure Web App 
+name: Test application
 
 env:
   PYTHON_VERSION: '3.11'         

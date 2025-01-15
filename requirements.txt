@@ -6,3 +6,4 @@ azure-identity
 pytest 
 Flask-Testing 
 pytest-mock
+azure-monitor-opentelemetry
